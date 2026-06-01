@@ -41,7 +41,7 @@ client.parentMessageId = null;
 // File upload
 await t("file upload", async () => {
   const fp = os.tmpdir() + "\\_chatgpt_test.txt";
-  fs.writeFileSync(fp, "test content from free ChatGPT client");
+  fs.writeFileSync(fp, "test content from chatgpt-unofficial-api");
   const r = await client.ask("what does the file say?", { files: [fp] });
   fs.unlinkSync(fp);
   return r?.length > 5;

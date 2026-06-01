@@ -1,16 +1,13 @@
 {
-  "name": "chatgpt-free",
+  "name": "chatgpt-unofficial-api-root",
   "version": "1.0.0",
-  "description": "Pure Node.js ChatGPT client — chat, upload files, voice, search, image gen. Zero dependencies.",
+  "private": true,
+  "description": "Monorepo for ChatGPT Unofficial API — client, source modules, and pro entry",
   "type": "module",
-  "keywords": ["chatgpt", "openai", "gpt-4", "api", "node", "reverse-engineered"],
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/etrnkz/chatgpt-unofficial-api.git"
-  },
-  "bugs": {
-    "url": "https://github.com/etrnkz/chatgpt-unofficial-api/issues"
   },
   "homepage": "https://github.com/etrnkz/chatgpt-unofficial-api#readme"
 }

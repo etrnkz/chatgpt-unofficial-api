@@ -1,13 +1,13 @@
 {
-  "name": "chatgpt-free",
+  "name": "chatgpt-unofficial-api",
   "version": "1.0.0",
-  "description": "Pure Node.js ChatGPT client — chat, upload files, voice, search, image gen. Zero dependencies.",
-  "main": "index.mjs",
+  "description": "Reverse-engineered ChatGPT API client — no login required for text, cookies unlock the full suite",
   "type": "module",
+  "main": "index.mjs",
   "bin": {
-    "chatgpt-free": "index.mjs"
+    "chatgpt": "index.mjs"
   },
-  "keywords": ["chatgpt", "openai", "gpt-4", "api", "node", "reverse-engineered"],
+  "keywords": ["chatgpt", "openai", "gpt", "gpt-4", "ai", "reverse-engineered", "unofficial"],
   "license": "MIT",
   "repository": {
     "type": "git",
