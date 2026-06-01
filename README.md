@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="ChatGPT Unofficial API">
+  <img src="assets/banner.svg?t=2" alt="ChatGPT Unofficial API">
 </p>
 
 <p align="center">
@@ -30,14 +30,15 @@
 
 ## Quick Start
 
-### Install
+Clone and run — zero dependencies, no install needed.
 
 ```sh
-npm install chatgpt-unofficial-api
+git clone https://github.com/etrnkz/chatgpt-unofficial-api.git
+cd chatgpt-unofficial-api/client
 ```
 
 ```js
-import { ChatGPT } from 'chatgpt-unofficial-api';
+import { ChatGPT } from './index.mjs';
 
 const client = new ChatGPT();
 await client.init();
@@ -47,13 +48,7 @@ console.log(answer);
 // The capital of France is Paris.
 ```
 
-### Or clone the repo
-
-```sh
-git clone https://github.com/etrnkz/chatgpt-unofficial-api.git
-cd chatgpt-unofficial-api/client
-node index.mjs
-```
+> npm package coming soon.
 
 ## At a Glance
 

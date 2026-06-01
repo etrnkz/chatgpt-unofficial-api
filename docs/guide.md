@@ -2,26 +2,15 @@
 
 ## Setup
 
-### Install from npm
-
-```sh
-npm install chatgpt-unofficial-api
-```
-
-```js
-import { ChatGPT } from 'chatgpt-unofficial-api';
-
-const client = new ChatGPT();
-await client.init();
-```
-
-### Or clone the repo
+Clone and run — zero deps, no install needed.
 
 ```sh
 git clone https://github.com/etrnkz/chatgpt-unofficial-api.git
 cd chatgpt-unofficial-api/client
 node index.mjs
 ```
+
+> npm package coming soon.
 
 ### With cookies
 
