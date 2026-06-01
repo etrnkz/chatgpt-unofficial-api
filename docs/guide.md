@@ -2,15 +2,24 @@
 
 ## Setup
 
+### Install from npm
+
 ```sh
-git clone https://github.com/etrnkz/chatgpt-unofficial-api.git
-cd chatgpt-unofficial-api
+npm install chatgpt-unofficial-api
 ```
 
-### Anonymous (no setup)
+```js
+import { ChatGPT } from 'chatgpt-unofficial-api';
+
+const client = new ChatGPT();
+await client.init();
+```
+
+### Or clone the repo
 
 ```sh
-cd client
+git clone https://github.com/etrnkz/chatgpt-unofficial-api.git
+cd chatgpt-unofficial-api/client
 node index.mjs
 ```
 
@@ -26,14 +35,6 @@ Export your ChatGPT cookies to `client/cookies.json`:
 ```
 
 See `client/cookies.json.example` for the format. Once present, authenticated endpoints unlock automatically.
-
-### As a package
-
-```sh
-cd client
-npm install -g .
-chatgpt
-```
 
 ## Basic Chat
 

@@ -30,13 +30,14 @@
 
 ## Quick Start
 
+### Install
+
 ```sh
-git clone https://github.com/etrnkz/chatgpt-unofficial-api.git
-cd chatgpt-unofficial-api/client
+npm install chatgpt-unofficial-api
 ```
 
 ```js
-import { ChatGPT } from './index.mjs';
+import { ChatGPT } from 'chatgpt-unofficial-api';
 
 const client = new ChatGPT();
 await client.init();
@@ -44,6 +45,14 @@ await client.init();
 const answer = await client.ask('What is the capital of France?');
 console.log(answer);
 // The capital of France is Paris.
+```
+
+### Or clone the repo
+
+```sh
+git clone https://github.com/etrnkz/chatgpt-unofficial-api.git
+cd chatgpt-unofficial-api/client
+node index.mjs
 ```
 
 ## At a Glance
