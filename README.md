@@ -13,7 +13,6 @@
   <a href="#quick-start">Quick Start</a> •
   <a href="docs/guide.md">Guide</a> •
   <a href="docs/api.md">API</a> •
-  <a href="docs/protocol.md">Protocol</a>
 </p>
 
 ---
@@ -50,7 +49,7 @@ console.log(answer);
 
 > npm package coming soon.
 
-## At a Glance
+## Features
 
 | Area | Methods | Auth |
 |------|---------|------|
@@ -66,17 +65,10 @@ console.log(answer);
 | Custom instructions | `getPersonalization`, `setPersonalization` | cookie |
 | Apps / GPTs | `getGizmos`, `getGizmo`, `getApps` | cookie |
 
-## Docs
-
-| | |
-|---|---|
-| [Guide](docs/guide.md) | Setup, cookies, streaming, files, voice, images, CLI |
-| [API Reference](docs/api.md) | Full docs for all methods — parameters, return types, examples |
-| [Protocol](docs/protocol.md) | How the anti-abuse pipeline works under the hood |
 
 ## Pro
 
-Need email/password login, auto signup, or 148tls-fetch Cloudflare bypass? Contact [@etrnkz](https://t.me/etrnkz) on Telegram.
+Need email/password login, auto signup,dev support , robust antibot detaction and more Contact [etrnkz](https://t.me/etrnkz) on Telegram.
 
 ```
 node chatgpt-auth.mjs --email user@example.com --password mypass
