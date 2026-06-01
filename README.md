@@ -1,12 +1,23 @@
-# ChatGPT Unofficial API
+<p align="center">
+  <img src="https://raw.githubusercontent.com/etrnkz/chatgpt-unofficial-api/main/assets/icon.svg" width="80" alt="logo">
+</p>
 
-Pure Node.js ChatGPT client with **zero dependencies**. Chat with GPT-4o, upload files, use voice, search the web, generate images — all without a browser, Playwright, or Puppeteer.
+<h1 align="center">ChatGPT Unofficial API</h1>
+
+<p align="center">
+  <b>Zero-dependency Node.js ChatGPT client</b><br>
+  Chat · Files · Voice · Search · Images · No browser needed
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/dependencies-none-brightgreen" alt="dependencies">
+  <img src="https://img.shields.io/badge/node-%3E%3D18-blue" alt="node">
+  <img src="https://img.shields.io/badge/license-MIT-purple" alt="license">
+</p>
 
 ```bash
 cd client && node index.mjs
 ```
-
----
 
 ## Quick Start
 
@@ -172,33 +183,6 @@ await client.ask("message", {
   historyDisabled: true,        // Disable training
 })
 ```
-
----
-
-## Project Structure
-
-```
-chatgpt-unofficial-api/
-├── src/                   # Core engine
-│   ├── pow.mjs            # FNV-1a PoW solver
-│   ├── turnstile.mjs      # Turnstile bytecode VM
-│   ├── cloudflare.mjs     # CF bypass + retry
-│   ├── sentinel.mjs       # Anti-abuse tokens
-│   ├── sse.mjs            # SSE parser
-│   └── upload.mjs         # File upload pipeline
-├── client/                # Standalone client (zero deps)
-│   ├── index.mjs          # Entry point
-│   ├── cookies.json.example
-│   ├── package.json
-│   └── _test_quick.mjs    # Test suite
-├── chatgpt.mjs            # Anonymous entry
-├── chatgpt-auth.mjs       # Pro entry
-├── package.json
-├── README.md
-├── LICENSE
-└── .gitignore
-```
-
 ---
 
 ## Pro Plan
