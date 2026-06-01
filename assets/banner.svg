@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 72">
   <rect width="320" height="72" rx="12" fill="#111111"/>
-  <g transform="translate(22,22)" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M-9,5 L-3,-5 L2,0 L7,-5 L13,5"/>
-    <path d="M-6,12 L-6,15 Q-6,18 -3,18 L7,18 Q10,18 10,15 L10,12"/>
+  <g transform="translate(18,18)">
+    <rect width="36" height="36" rx="8" fill="#10a37f"/>
+    <path d="M18,9 L22,15 L28,16 L24,21 L25,27 L18,24 L11,27 L12,21 L8,16 L14,15 Z" fill="#ffffff"/>
   </g>
-  <text x="52" y="36" font-family="system-ui, sans-serif" font-size="18" font-weight="700" fill="#ffffff">ChatGPT</text>
-  <text x="52" y="53" font-family="system-ui, sans-serif" font-size="10" fill="#888888" font-weight="500">UNOFFICIAL API · zero deps · node.js</text>
+  <text x="66" y="36" font-family="system-ui, sans-serif" font-size="18" font-weight="700" fill="#ffffff">ChatGPT</text>
+  <text x="66" y="53" font-family="system-ui, sans-serif" font-size="10" fill="#888888" font-weight="500">UNOFFICIAL API · zero deps · node.js</text>
 </svg>
