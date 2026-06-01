@@ -70,9 +70,7 @@ console.log(answer);
 
 Need email/password login, auto signup,dev support , robust antibot detaction and more Contact [etrnkz](https://t.me/etrnkz) on Telegram.
 
-```
-node chatgpt-auth.mjs --email user@example.com --password mypass
-```
+
 
 ## License
 
