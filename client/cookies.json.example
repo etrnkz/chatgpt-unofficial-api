@@ -1,0 +1,10 @@
+[
+  {
+    "name": "__Secure-next-auth.session-token",
+    "value": "your-session-token-here"
+  },
+  {
+    "name": "cf_clearance",
+    "value": "your-cf-clearance-token"
+  }
+]
