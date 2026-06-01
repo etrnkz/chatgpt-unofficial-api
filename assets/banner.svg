@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120">
+  <defs>
+    <linearGradient id="b" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10a37f"/>
+      <stop offset="100%" stop-color="#0a6048"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="120" rx="16" fill="url(#b)"/>
+  <g transform="translate(30,38)" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M-12,6 L-4,-6 L2,0 L8,-6 L16,6"/>
+    <path d="M-8,14 L-8,18 Q-8,22 -4,22 L8,22 Q12,22 12,18 L12,14"/>
+  </g>
+  <text x="62" y="56" font-family="system-ui, sans-serif" font-size="24" font-weight="700" fill="#fff">ChatGPT</text>
+  <text x="62" y="78" font-family="system-ui, sans-serif" font-size="13" fill="#c8f0e4" font-weight="500">UNOFFICIAL API</text>
+  <text x="62" y="96" font-family="system-ui, sans-serif" font-size="10" fill="#8fd1be">zero dependencies · node.js · reverse-engineered</text>
+</svg>

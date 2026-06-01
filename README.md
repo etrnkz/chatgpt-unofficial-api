@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/icon.svg" alt="ChatGPT Unofficial API" width="100">
+  <img src="assets/banner.svg" alt="ChatGPT Unofficial API">
 </p>
 
 <p align="center">
@@ -66,9 +66,9 @@ console.log(answer);
 
 | | |
 |---|---|
-| <img src="assets/icon.svg" width="18" align="center"> [Guide](docs/guide.md) | Setup, cookies, streaming, files, voice, images, CLI |
-| <img src="assets/icon.svg" width="18" align="center"> [API Reference](docs/api.md) | Full docs for all methods — parameters, return types, examples |
-| <img src="assets/icon.svg" width="18" align="center"> [Protocol](docs/protocol.md) | How the anti-abuse pipeline works under the hood |
+| [Guide](docs/guide.md) | Setup, cookies, streaming, files, voice, images, CLI |
+| [API Reference](docs/api.md) | Full docs for all methods — parameters, return types, examples |
+| [Protocol](docs/protocol.md) | How the anti-abuse pipeline works under the hood |
 
 ## Pro
 
