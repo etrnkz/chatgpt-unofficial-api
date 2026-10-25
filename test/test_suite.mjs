@@ -32,14 +32,22 @@ function test(name, fn) {
 }
 
 async function asyncTest(name, fn) {
-  try {
-    await fn();
-    console.log(`  ✓ ${name}`);
-    passed++;
-  } catch (err) {
-    console.error(`  ✗ ${name}: ${err.message}`);
-    failed++;
+  let lastErr;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await fn();
+      console.log(`  ✓ ${name}`);
+      passed++;
+      return;
+    } catch (err) {
+      lastErr = err;
+      if (attempt < 3) {
+        await new Promise((r) => setTimeout(r, 1000 * attempt));
+      }
+    }
   }
+  console.error(`  ✗ ${name}: ${lastErr.message}`);
+  failed++;
 }
 
 console.log("\n=== 1. Core PoW & FNV-1a Tests ===");

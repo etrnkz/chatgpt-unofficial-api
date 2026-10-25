@@ -1,6 +1,13 @@
-<p align="center">
-  <img src="assets/banner.svg?t=2" alt="ChatGPT Unofficial API" width="100%">
-</p>
+<div align="center">
+<pre>
+  ____ _           _    ____ ____ _____      _    ____ ___ 
+ / ___| |__   __ _| |_ / ___|  _ \_   _|    / \  |  _ \_ _|
+| |   | '_ \ / _` | __| |  _| |_) || |     / _ \ | |_) | | 
+| |___| | | | (_| | |_| |_| |  __/ | |    / ___ \|  __/| | 
+ \____|_| |_|\__,_|\__|\____|_|    |_|   /_/   \_\_|  |___|
+       « U N O F F I C I A L   A P I   v 2 . 0 »
+</pre>
+</div>
 
 <p align="center">
   <img src="https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white" alt="Node 18+">

@@ -6,8 +6,16 @@ import path from "path";
 
 const VERSION = "2.0.0";
 
-const HELP = `
-ChatGPT Unofficial API CLI — v${VERSION}
+const BANNER = `
+  ____ _           _    ____ ____ _____      _    ____ ___ 
+ / ___| |__   __ _| |_ / ___|  _ \\_   _|    / \\  |  _ \\_ _|
+| |   | '_ \\ / _\` | __| |  _| |_) || |     / _ \\ | |_) | | 
+| |___| | | | (_| | |_| |_| |  __/ | |    / ___ \\|  __/| | 
+ \\____|_| |_|\\__,_|\\__|\\____|_|    |_|   /_/   \\_\\_|  |___|
+       « U N O F F I C I A L   A P I   v\${VERSION} »
+`;
+
+const HELP = `${BANNER}
 Dual backend: Web (chatgpt.com) and App (android.chat.openai.com)
 
 Usage:
