@@ -28,7 +28,7 @@
     }
   },
   "bin": {
-    "chatgpt": "./bin/chatgpt.mjs"
+    "chatgpt": "bin/chatgpt.js"
   },
   "files": [
     "src",
