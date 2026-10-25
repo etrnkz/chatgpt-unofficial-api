@@ -1,151 +1,159 @@
-# API Reference
+# API Reference — chatgpt-unofficial-api
 
-## Constructor
+The library exposes two client classes, a universal factory, and core utilities.
 
-### `new ChatGPT(opts)`
+```javascript
+import { ChatGPTWeb, ChatGPTApp, createChatGPT } from "chatgpt-unofficial-api";
+```
+
+---
+
+## 1. `ChatGPTWeb` (Web Backend)
+
+Targeting `https://chatgpt.com`.
+
+### Constructor
+
+```javascript
+new ChatGPTWeb(options)
+```
 
 | Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `cookies` | `string \| string[]` | auto | Path to cookies.json or array of cookie strings |
-| `deviceId` | `string` | random UUID | Stable device identifier |
-| `timezoneOffset` | `number` | `-180` | Minutes from UTC |
-| `model` | `string` | `"auto"` | Model override |
-| `historyDisabled` | `boolean` | `true` | Disable training on conversations |
+|---|---|---|---|
+| `cookies` | `string \| Array<{name, value}>` | `null` | Cookie string or cookie objects |
+| `cookiesFile` | `string` | `"./cookies.json"` | Path to cookie file |
+| `accessToken` | `string` | `null` | OAuth/Session access token |
+| `sessionToken` | `string` | `null` | `__Secure-next-auth.session-token` |
+| `proxyUrl` | `string` | `null` | Proxy URL (`http://...`, `socks5://...`) |
+| `maxRetries` | `number` | `3` | Retry attempts on Cloudflare challenge |
+| `timeout` | `number` | `30000` | Request timeout in ms |
+| `userAgent` | `string` | Chrome 140 UA | Custom desktop user agent |
 
-## Methods
+### Methods
 
-### `init()`
+#### `init(): Promise<void>`
+Initializes the session, reads dynamic buildId and deviceId from cookie, and configures PoW state.
 
-Initialize session — solves PoW, runs Turnstile VM, gets Conduit token.
+#### `ask(message: string, options?: AskOptions): Promise<string>`
+Sends a prompt and returns the full assistant text response.
 
-```js
-await client.init();
-```
+*Options:*
+- `model?: string` — Model slug (`"auto"`, `"gpt-4o"`, etc.)
+- `files?: string[]` — Array of file paths to attach (multimodal)
+- `image?: string` — Base64 image payload
+- `forceSearch?: boolean` — Enable web search tool
+- `systemHints?: string[]` — System guidance hints
 
-### `ask(text, opts?)`
-
-Send a message and get the reply text.
-
-```js
-const reply = await client.ask('What is 2+2?');
-```
-
-**Options:**
-
-| Option | Type | Description |
-|--------|------|-------------|
-| `files` | `string[]` | File paths to attach |
-| `conversationId` | `string` | Continue existing conversation |
-| `parentMessageId` | `string` | Branch from specific message |
-| `model` | `string` | Override model |
-| `historyDisabled` | `boolean` | Disable training |
-
-### `streamAsk(text, opts?)`
-
-Same as `ask` but returns an async iterable of chunks.
-
-```js
-for await (const chunk of client.streamAsk('Tell me a story')) {
-  if (chunk.text) process.stdout.write(chunk.text);
+#### `streamAsk(message: string, options?: AskOptions): AsyncGenerator<StreamChunk>`
+Yields streaming response deltas:
+```typescript
+interface StreamChunk {
+  text: string;
+  accumulated: string;
+  done: boolean;
+  conversationId: string | null;
+  messageId: string | null;
 }
 ```
 
-### `searchWeb(query)`
+#### `searchWeb(query: string): Promise<string>`
+Syntactic sugar for `ask(query, { forceSearch: true })`.
 
-Search the web through ChatGPT.
+#### `askWithFiles(message: string, files: string[]): Promise<string>`
+Uploads local files and passes them as multimodal attachments.
 
-```js
-const results = await client.searchWeb('weather today');
+#### `getModels(): Promise<ModelInfo>`
+Fetches web model options and tags.
+
+#### `getVoices(): Promise<VoiceInfo>`
+Returns available voice synthesizers (Maple, Cove, Breeze, Juniper, Ember, Sol, etc.) with preview URLs.
+
+#### Authenticated Methods (Requires cookies or token)
+- `getProfile(): Promise<UserProfile>` — Fetch current account email and name
+- `getAccount(): Promise<AccountStatus>` — Check account subscription status
+- `getSettings(): Promise<UserSettings>` — User preferences
+- `getBillingInfo(): Promise<BillingInfo>` — Customer portal link
+- `getConversations(offset?: number, limit?: number): Promise<ConversationList>` — History list
+- `getConversation(convId: string): Promise<ConversationDetail>` — Thread messages
+- `renameConversation(convId: string, title: string): Promise<any>` — Rename thread
+- `deleteConversation(convId: string): Promise<any>` — Remove thread
+- `getGizmos(): Promise<GizmoList>` — Custom GPTs
+- `getGizmo(gizmoId: string): Promise<GizmoDetail>` — Specific GPT metadata
+- `getMemory(): Promise<any>` — Custom user memory facts
+- `deleteMemory(memoryId: string): Promise<any>` — Delete a specific memory fact
+- `clearMemory(): Promise<any>` — Clear all memories
+
+---
+
+## 2. `ChatGPTApp` (Mobile Backend)
+
+Targeting `https://android.chat.openai.com`.
+
+### Constructor
+
+```javascript
+new ChatGPTApp(options)
 ```
 
-### `getModels()`
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `accessToken` | `string` | `null` | Mobile OAuth Bearer token |
+| `deviceId` | `string` | random UUID | Persistent Android device UUID |
+| `clientType` | `"android" \| "ios"` | `"android"` | Identity client type header |
+| `packageName` | `string` | `"com.openai.chatgpt"` | Official app package name |
+| `userAgent` | `string` | Android 14 UA | Official mobile User-Agent |
+| `playIntegrityToken` | `string` | `null` | Google Play Integrity token |
+| `proxyUrl` | `string` | `null` | Proxy URL |
+| `timeout` | `number` | `35000` | Timeout in ms |
 
-Returns available models.
+### Methods
 
-```js
-const models = await client.getModels();
-```
+#### `init(): Promise<void>`
+Initializes client deviceId and mobile config state.
 
-### `getVoices()`
+#### `getChatRequirements(): Promise<SentinelRequirements>`
+Fetches Sentinel PoW seed and challenge difficulty from `android.chat.openai.com`.
 
-Returns available voices for TTS.
+#### `getConduit(next?: boolean): Promise<string>`
+Performs mobile conduit handshake (`/f/conversation/prepare`) and returns `conduit_token`.
 
-```js
-const voices = await client.getVoices();
-```
+#### `ask(message: string, options?: { model?: string }): Promise<string>`
+Executes mobile conversation. If Play Integrity is missing on anonymous conversation, throws structured error with code `PLAY_INTEGRITY_REQUIRED`.
 
-### `generateSpeech(text, voiceId)`
+#### `streamAsk(message: string, options?: { model?: string }): AsyncGenerator<StreamChunk>`
+Streams chunks directly from mobile SSE endpoint.
 
-Generate speech audio. Returns a Buffer.
+#### `getModels(): Promise<MobileModelCatalog>`
+Returns the official Android APK model catalog, including GPT-6, GPT-5.6 Luna, thinking effort settings, and preset categories.
 
-```js
-const audio = await client.generateSpeech('Hello', voiceId);
-```
+#### `getConversations(offset?: number, limit?: number): Promise<any>`
+Retrieves mobile conversation threads.
 
-### `generateImage(prompt)`
+#### `getConversation(convId: string): Promise<any>`
+Retrieves messages for a mobile conversation thread.
 
-Generate images with DALL-E. Returns an array of image objects.
+#### `renameConversation(convId: string, title: string): Promise<any>`
+Renames a mobile conversation.
 
-```js
-const images = await client.generateImage('A cat in space');
-```
+#### `deleteConversation(convId: string): Promise<any>`
+Deletes a mobile conversation.
 
-## Auth Methods (require cookies)
+#### `getSettings(): Promise<any>`
+Fetches mobile user speech, language, and account settings.
 
-### `getProfile()`
+#### `getMemories(): Promise<any>`
+Fetches user mobile memories.
 
-```js
-const profile = await client.getProfile();
-```
+---
 
-### `getConversations(offset?, limit?)`
+## 3. Universal Factory `createChatGPT`
 
-```js
-const history = await client.getConversations();
-```
+```javascript
+import { createChatGPT } from "chatgpt-unofficial-api";
 
-### `getConversation(id)`
+// Returns ChatGPTWeb instance
+const web = createChatGPT({ type: "web" });
 
-```js
-const conv = await client.getConversation(convId);
-```
-
-### `getBillingInfo()`
-
-```js
-const billing = await client.getBillingInfo();
-```
-
-### `getSettings()`
-
-```js
-const settings = await client.getSettings();
-```
-
-### `getMemory()`
-
-```js
-const memory = await client.getMemory();
-```
-
-### `getProjects()`
-
-```js
-const projects = await client.getProjects();
-```
-
-### `getGizmos()`
-
-List available GPTs.
-
-```js
-const gizmos = await client.getGizmos();
-```
-
-### `getPersonalization()`
-
-Get custom instructions.
-
-```js
-const instructions = await client.getPersonalization();
+// Returns ChatGPTApp instance
+const app = createChatGPT({ type: "app", accessToken: "..." });
 ```

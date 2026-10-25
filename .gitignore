@@ -2,3 +2,4 @@ node_modules/
 client/cookies.json
 *.log
 .env
+client/_*

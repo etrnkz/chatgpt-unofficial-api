@@ -1,13 +1,77 @@
 {
-  "name": "chatgpt-unofficial-api-root",
-  "version": "1.0.0",
-  "private": true,
-  "description": "Monorepo for ChatGPT Unofficial API — client, source modules, and pro entry",
+  "name": "chatgpt-unofficial-api",
+  "version": "2.0.0",
+  "description": "Unofficial ChatGPT API client for Node.js — dual Web & Mobile App backends with zero dependencies",
   "type": "module",
+  "main": "./src/index.mjs",
+  "types": "./types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./src/index.mjs"
+    },
+    "./web": {
+      "types": "./types/web.d.ts",
+      "import": "./src/web/index.mjs"
+    },
+    "./app": {
+      "types": "./types/app.d.ts",
+      "import": "./src/app/index.mjs"
+    },
+    "./mobile": {
+      "types": "./types/app.d.ts",
+      "import": "./src/app/index.mjs"
+    },
+    "./core": {
+      "types": "./types/core.d.ts",
+      "import": "./src/core/index.mjs"
+    }
+  },
+  "bin": {
+    "chatgpt": "./bin/chatgpt.mjs"
+  },
+  "files": [
+    "src",
+    "types",
+    "bin",
+    "client/index.mjs",
+    "client/package.json",
+    "client/cookies.json.example",
+    "chatgpt.mjs",
+    "README.md",
+    "LICENSE",
+    "assets"
+  ],
+  "scripts": {
+    "test": "node test/test_suite.mjs",
+    "test:live": "node client/_live_test.mjs"
+  },
+  "keywords": [
+    "chatgpt",
+    "openai",
+    "gpt-4",
+    "gpt-4o",
+    "gpt-5",
+    "gpt-6",
+    "reverse-engineered",
+    "unofficial",
+    "android",
+    "mobile-api",
+    "zero-dependency",
+    "ai"
+  ],
+  "author": "etrnkz",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/etrnkz/chatgpt-unofficial-api.git"
   },
-  "homepage": "https://github.com/etrnkz/chatgpt-unofficial-api#readme"
+  "bugs": {
+    "url": "https://github.com/etrnkz/chatgpt-unofficial-api/issues"
+  },
+  "homepage": "https://github.com/etrnkz/chatgpt-unofficial-api#readme",
+  "dependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }

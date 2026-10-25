@@ -1,21 +1,13 @@
 {
-  "name": "chatgpt-unofficial-api",
-  "version": "1.0.0",
-  "description": "Reverse-engineered ChatGPT API client — no login required for text, cookies unlock the full suite",
+  "name": "chatgpt-unofficial-api-client",
+  "version": "2.0.0",
+  "description": "Legacy client entry for chatgpt-unofficial-api",
   "type": "module",
   "main": "index.mjs",
+  "types": "../types/web.d.ts",
   "bin": {
     "chatgpt": "index.mjs"
   },
-  "keywords": ["chatgpt", "openai", "gpt", "gpt-4", "ai", "reverse-engineered", "unofficial"],
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/etrnkz/chatgpt-unofficial-api.git"
-  },
-  "bugs": {
-    "url": "https://github.com/etrnkz/chatgpt-unofficial-api/issues"
-  },
-  "homepage": "https://github.com/etrnkz/chatgpt-unofficial-api#readme",
   "dependencies": {}
 }

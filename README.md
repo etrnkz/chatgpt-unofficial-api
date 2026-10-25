@@ -1,77 +1,222 @@
 <p align="center">
-  <img src="assets/banner.svg?t=2" alt="ChatGPT Unofficial API">
+  <img src="assets/banner.svg?t=2" alt="ChatGPT Unofficial API" width="100%">
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white" alt="Node 18+">
-  <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT">
+  <img src="https://img.shields.io/badge/types-TypeScript-blue?logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://img.shields.io/badge/dependencies-0-lightgrey" alt="0 deps">
-  <img src="https://img.shields.io/badge/status-active-success" alt="Active">
+  <img src="https://img.shields.io/badge/backend-Dual%20(Web%20%2B%20App)-9cf" alt="Dual Backend">
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT">
 </p>
 
 <p align="center">
   <a href="#quick-start">Quick Start</a> •
-  <a href="docs/guide.md">Guide</a> •
-  <a href="docs/api.md">API</a> •
+  <a href="#two-backends-web-vs-app">Web vs App</a> •
+  <a href="#cli-usage">CLI</a> •
+  <a href="docs/api.md">API Reference</a> •
+  <a href="docs/guide.md">Guide</a>
 </p>
 
 ---
 
 <p align="center">
-  <strong>Unofficial Node.js client for ChatGPT</strong>
+  <strong>Zero-dependency Node.js client for ChatGPT featuring dual Web & Mobile App backends.</strong>
   <br>
-  No login required for chat. Cookies unlock files, voice, search, images & more.
-  <br>
-  Drop a <code>cookies.json</code> and go.
+  Instant anonymous text chat out of the box, with full support for cookies, OAuth, mobile edge endpoints, and streaming.
 </p>
+
+---
+
+## Two Backends: Web vs App
+
+This package provides two purpose-built clients reverse-engineered from OpenAI's production architecture:
+
+| Feature | 🌐 Web Version (`ChatGPTWeb`) | 📱 App Version (`ChatGPTApp`) |
+|---|---|---|
+| **Target Host** | `https://chatgpt.com` | `https://android.chat.openai.com` |
+| **Authentication** | **Anonymous** (zero auth) or **Cookies / Token** | **OAuth Bearer Token** or **Anonymous** |
+| **Edge Gate** | Cloudflare Web Protection + Sentinel | Direct OpenAI Mobile Edge (no Cloudflare) |
+| **Identity Headers** | Desktop Browser Chrome / Windows | `oai-client-type: android`, official APK package |
+| **PoW Engine** | FNV-1a 32-bit Sentinel solver | FNV-1a 32-bit Mobile Sentinel solver |
+| **Model Catalog** | Web presets (`auto`, `gpt-4o`, `o1`) | Official Android APK Catalog (`gpt-6`, `gpt-5.6 Luna`, etc.) |
+| **File Uploads** | Multimodal images & documents | Yes (with token) |
+| **Web Search** | Built-in via tool routing | Built-in via tool routing |
+| **Threads & Memory** | Complete history, rename, delete, memory | Full thread CRUD & mobile user settings |
+| **Special Features** | Voice preview audio, DALL-E, Turnstile VM | Codex Remote / Slingshot discovery & Realtime AVM hooks |
 
 ---
 
 ## Quick Start
 
-Clone and run — zero dependencies, no install needed.
+### 1. Install
 
 ```sh
-git clone https://github.com/etrnkz/chatgpt-unofficial-api.git
-cd chatgpt-unofficial-api/client
+npm install chatgpt-unofficial-api
 ```
 
-```js
-import { ChatGPT } from './index.mjs';
+Or run via npx directly without installing:
 
-const client = new ChatGPT();
+```sh
+npx chatgpt "What is the speed of light in vacuum?"
+```
+
+---
+
+### 2. Type 1: Web Version (`ChatGPTWeb`)
+
+Fastest way to get answers without an account or API key:
+
+```javascript
+import { ChatGPTWeb } from "chatgpt-unofficial-api/web";
+// or: import { ChatGPT } from "chatgpt-unofficial-api";
+
+const client = new ChatGPTWeb();
 await client.init();
 
-const answer = await client.ask('What is the capital of France?');
+// Simple question
+const answer = await client.ask("Explain quantum computing in one sentence.");
 console.log(answer);
-// The capital of France is Paris.
+
+// Real-time streaming
+for await (const chunk of client.streamAsk("Write a haiku about code.")) {
+  process.stdout.write(chunk.text);
+}
+
+// Multimodal file attachment
+const summary = await client.ask("Summarize this document", {
+  files: ["./report.pdf"]
+});
+
+// Web search
+const news = await client.searchWeb("Latest discoveries from James Webb telescope");
 ```
 
-> npm package coming soon.
+#### With Cookies (Unlocks User Profile, History & Advanced Models)
+Export cookies from your browser into a `cookies.json` file or pass as a string:
 
-## Features
+```javascript
+const client = new ChatGPTWeb({
+  cookiesFile: "./cookies.json"
+});
+await client.init();
 
-| Area | Methods | Auth |
-|------|---------|------|
-| Chat | `ask`, `streamAsk` | none |
-| File upload | `ask` with `files` option | none |
-| Web search | `searchWeb` | none |
-| Conversations | `getConversations`, `getConversation` | cookie |
-| Voice | `getVoices`, `generateSpeech` | cookie |
-| Images | `generateImage` | cookie |
-| Account | `getProfile`, `getSettings`, `getBillingInfo` | cookie |
-| Projects | `getProjects` | cookie |
-| Memory | `getMemory`, `deleteMemory` | cookie |
-| Custom instructions | `getPersonalization`, `setPersonalization` | cookie |
-| Apps / GPTs | `getGizmos`, `getGizmo`, `getApps` | cookie |
+const conversations = await client.getConversations();
+console.log("Your chats:", conversations.items.map(c => c.title));
+```
 
+---
 
-## Pro
+### 3. Type 2: Mobile App Version (`ChatGPTApp`)
 
-Need email/password login, auto signup,dev support , robust antibot detaction and more Contact [etrnkz](https://t.me/etrnkz) on Telegram.
+Directly talks to the official Android application edge backend (`https://android.chat.openai.com`):
 
+```javascript
+import { ChatGPTApp } from "chatgpt-unofficial-api/app";
 
+const app = new ChatGPTApp({
+  accessToken: process.env.CHATGPT_ACCESS_TOKEN // optional for catalog, required for conversation
+});
+await app.init();
+
+// Fetch official mobile model catalog (includes newest GPT-6 & GPT-5.6 Luna presets)
+const catalog = await app.getModels();
+console.log("Available mobile models:", catalog.models.map(m => m.title));
+
+// Chat over mobile edge
+const response = await app.ask("Give me 3 productivity tips");
+console.log(response);
+
+// Mobile thread management
+const chats = await app.getConversations(0, 20);
+console.log("Mobile threads:", chats);
+```
+
+> **Note on Mobile Anonymous Mode**: The mobile conversation endpoint checks for Google Play Integrity hardware attestation. For unauthenticated chat, `ChatGPTWeb` is recommended as web anonymous mode requires no device attestation.
+
+---
+
+### 4. Universal Factory
+
+You can also dynamically select the backend using `createChatGPT`:
+
+```javascript
+import { createChatGPT } from "chatgpt-unofficial-api";
+
+const webClient = createChatGPT({ type: "web" });
+const appClient = createChatGPT({ type: "app", accessToken: "..." });
+```
+
+---
+
+## CLI Usage
+
+The package includes a full-featured zero-dependency CLI binary:
+
+```sh
+# Ask ChatGPT using Web backend (default)
+npx chatgpt "Why is the sky blue?"
+
+# Real-time streaming output
+npx chatgpt web "Tell me an epic sci-fi story" --stream
+
+# Inspect official mobile models
+npx chatgpt models
+
+# Inspect available voice synthesizers
+npx chatgpt voices
+
+# Use with authenticated cookies
+npx chatgpt web "What did we talk about yesterday?" --cookies ./cookies.json
+
+# Use with proxy
+npx chatgpt "Hello" --proxy "http://user:pass@proxy.com:8080"
+```
+
+---
+
+## TypeScript Support
+
+Full TypeScript definitions are bundled out of the box with autocomplete and inline JSDocs:
+
+```typescript
+import { ChatGPTWeb, ChatGPTApp, StreamChunk } from "chatgpt-unofficial-api";
+
+const client: ChatGPTWeb = new ChatGPTWeb();
+await client.init();
+
+const stream: AsyncGenerator<StreamChunk> = client.streamAsk("Explain gravity");
+for await (const chunk of stream) {
+  process.stdout.write(chunk.text);
+}
+```
+
+---
+
+## Architecture & Submodules
+
+For specialized integration, individual modules are available under `chatgpt-unofficial-api/core`:
+
+- `pow.mjs`: FNV-1a 32-bit Sentinel Proof-of-Work solver (<1ms execution).
+- `sse.mjs`: High-performance streaming Server-Sent Events parser with buffered chunk support.
+- `cloudflare.mjs`: Resilient HTTP client with automatic cookie jar tracking and exponential backoff retry.
+- `upload.mjs`: Multimodal file and image upload helper.
+- `turnstile.mjs`: Bytecode VM runner for Cloudflare challenges.
+
+---
+
+## Backwards Compatibility
+
+Upgrading from v1.x? All legacy imports and usage patterns are 100% backwards-compatible:
+```javascript
+import { ChatGPT } from "chatgpt-unofficial-api";
+// or
+import { ChatGPT } from "./client/index.mjs";
+```
+Both resolve seamlessly to `ChatGPTWeb`.
+
+---
 
 ## License
 
-MIT &copy; [etrnkz](https://github.com/etrnkz)
+MIT © [etrnkz](https://github.com/etrnkz)

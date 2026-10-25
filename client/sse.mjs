@@ -36,6 +36,21 @@ export function processSSEEvent(d, state) {
     return result;
   }
 
+  // Full batched assistant message (buffered encoding: no `o`/`p` fields).
+  // The assistant turn arrives as { v: { message: { author:{role:"assistant"},
+  // content:{parts:[...]} } } } — the parts array holds the complete text.
+  if (!state.contentDone && !d.o && !d.p && d.v?.message?.author?.role === "assistant") {
+    const parts = d.v.message.content?.parts;
+    if (Array.isArray(parts)) {
+      const text = parts.filter(p => typeof p === "string").join("");
+      if (text) {
+        result.text = text;
+        state.contentDone = true;
+        return result;
+      }
+    }
+  }
+
   // Raw text delta (streaming mode, no 'o' field)
   if (!state.contentDone && typeof d.v === "string" && d.v.length > 0 && !d.o && !d.type) {
     result.text = d.v;
