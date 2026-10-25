@@ -200,18 +200,6 @@ for await (const chunk of stream) {
 
 ---
 
-## Architecture & Submodules
-
-For specialized integration, individual modules are available under `chatgpt-unofficial-api/core`:
-
-- `pow.mjs`: FNV-1a 32-bit Sentinel Proof-of-Work solver (<1ms execution).
-- `sse.mjs`: High-performance streaming Server-Sent Events parser with buffered chunk support.
-- `cloudflare.mjs`: Resilient HTTP client with automatic cookie jar tracking and exponential backoff retry.
-- `upload.mjs`: Multimodal file and image upload helper.
-- `turnstile.mjs`: Bytecode VM runner for Cloudflare challenges.
-
----
-
 ## Backwards Compatibility
 
 Upgrading from v1.x? All legacy imports and usage patterns are 100% backwards-compatible:
