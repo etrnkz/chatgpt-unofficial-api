@@ -2,19 +2,50 @@
 
 ## Setup
 
-Clone and run — zero deps, no install needed.
+```sh
+npm install chatgpt-unofficial-api
+```
+
+Or clone the repo:
 
 ```sh
 git clone https://github.com/etrnkz/chatgpt-unofficial-api.git
-cd chatgpt-unofficial-api/client
-node index.mjs
+cd chatgpt-unofficial-api
 ```
 
-> npm package coming soon.
+---
+
+## 1. Web Version (`ChatGPTWeb`)
+
+Works out of the box with zero login required:
+
+```javascript
+import { ChatGPTWeb } from "chatgpt-unofficial-api/web";
+
+const client = new ChatGPTWeb();
+await client.init();
+
+// Single prompt
+const reply = await client.ask("Hello!");
+console.log(reply);
+
+// Streaming
+for await (const chunk of client.streamAsk("Tell me a story")) {
+  process.stdout.write(chunk.text);
+}
+
+// File attachments
+const summary = await client.ask("Summarize this file", {
+  files: ["./notes.txt"]
+});
+
+// Web search
+const results = await client.searchWeb("Latest news");
+```
 
 ### With cookies
 
-Export your ChatGPT cookies to `client/cookies.json`:
+Export cookies from your browser to `cookies.json`:
 
 ```json
 [
@@ -23,63 +54,55 @@ Export your ChatGPT cookies to `client/cookies.json`:
 ]
 ```
 
-See `client/cookies.json.example` for the format. Once present, authenticated endpoints unlock automatically.
+Pass the file path or raw string:
 
-## Basic Chat
-
-```js
-import { ChatGPT } from './client/index.mjs';
-
-const client = new ChatGPT();
+```javascript
+const client = new ChatGPTWeb({
+  cookiesFile: "./cookies.json"
+});
 await client.init();
 
-const reply = await client.ask('Hello!');
+const profile = await client.getProfile();
+const conversations = await client.getConversations();
+```
+
+---
+
+## 2. Mobile App Version (`ChatGPTApp`)
+
+Connects directly to `https://android.chat.openai.com`:
+
+```javascript
+import { ChatGPTApp } from "chatgpt-unofficial-api/app";
+
+const app = new ChatGPTApp({
+  accessToken: process.env.CHATGPT_TOKEN
+});
+await app.init();
+
+// Fetch mobile model catalog
+const catalog = await app.getModels();
+console.log(catalog.models.map(m => m.title));
+
+// Chat over mobile edge
+const reply = await app.ask("Hello");
 console.log(reply);
 ```
 
-## Streaming
+---
 
-```js
-for await (const chunk of client.streamAsk('Tell me a story')) {
-  if (chunk.text) process.stdout.write(chunk.text);
-}
-```
-
-## Files
-
-```js
-const reply = await client.ask('What does this say?', {
-  files: ['./report.pdf']
-});
-```
-
-## Web Search
-
-```js
-const results = await client.searchWeb('Latest AI news');
-```
-
-## Voice
-
-```js
-const voices = await client.getVoices();
-const audio = await client.generateSpeech('Hello', voices[0].id);
-```
-
-## Images
-
-```js
-const images = await client.generateImage('A cat in space');
-```
-
-## CLI
+## 3. CLI
 
 ```sh
-node client/index.mjs --help
+# Ask via web backend
+npx chatgpt "What is 2+2?"
 
-# Anonymous
-node client/index.mjs
+# Stream response
+npx chatgpt web "Tell me a story" --stream
 
-# With custom cookies
-node client/index.mjs --cookies ./my-cookies.json
+# View models
+npx chatgpt models
+
+# View voices
+npx chatgpt voices
 ```

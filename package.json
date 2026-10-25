@@ -43,8 +43,7 @@
     "assets"
   ],
   "scripts": {
-    "test": "node test/test_suite.mjs",
-    "test:live": "node client/_live_test.mjs"
+    "chat": "node bin/chatgpt.mjs"
   },
   "keywords": [
     "chatgpt",
