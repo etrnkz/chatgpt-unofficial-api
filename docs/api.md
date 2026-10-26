@@ -1,9 +1,9 @@
-# API Reference — chatgpt-unofficial-api
+# API Reference — @etrnkz/chatgpt
 
 The library exposes two client classes, a universal factory, and core utilities.
 
 ```javascript
-import { ChatGPTWeb, ChatGPTApp, createChatGPT } from "chatgpt-unofficial-api";
+import { ChatGPTWeb, ChatGPTApp, createChatGPT } from "@etrnkz/chatgpt";
 ```
 
 ---

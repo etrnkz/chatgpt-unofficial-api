@@ -50,13 +50,13 @@ Choose the backend that fits your use case:
 ## Quick Start
 
 ```sh
-npm install chatgpt-unofficial-api
+npm install @etrnkz/chatgpt
 ```
 
 ### 1. Web (anonymous, no account needed)
 
 ```javascript
-import { ChatGPTWeb } from "chatgpt-unofficial-api/web";
+import { ChatGPTWeb } from "@etrnkz/chatgpt/web";
 
 const client = new ChatGPTWeb();
 await client.init();
@@ -94,7 +94,7 @@ console.log(chats.items.map(c => c.title));
 ### 3. Mobile App (direct edge backend)
 
 ```javascript
-import { ChatGPTApp } from "chatgpt-unofficial-api/app";
+import { ChatGPTApp } from "@etrnkz/chatgpt/app";
 
 const app = new ChatGPTApp({
   accessToken: process.env.CHATGPT_TOKEN
@@ -118,7 +118,7 @@ const chats = await app.getConversations(0, 20);
 ### 4. Dynamic Factory
 
 ```javascript
-import { createChatGPT } from "chatgpt-unofficial-api";
+import { createChatGPT } from "@etrnkz/chatgpt";
 
 const web = createChatGPT({ type: "web" });
 const app = createChatGPT({ type: "app", accessToken: "..." });
@@ -132,22 +132,22 @@ Run directly with `npx`:
 
 ```sh
 # Ask via web backend
-npx chatgpt "Why is the sky blue?"
+npx @etrnkz/chatgpt "Why is the sky blue?"
 
 # Stream response
-npx chatgpt web "Tell me a story" --stream
+npx @etrnkz/chatgpt web "Tell me a story" --stream
 
 # View models
-npx chatgpt models
+npx @etrnkz/chatgpt models
 
 # View voices
-npx chatgpt voices
+npx @etrnkz/chatgpt voices
 
 # Pass cookies
-npx chatgpt web "Hello" --cookies ./cookies.json
+npx @etrnkz/chatgpt web "Hello" --cookies ./cookies.json
 
 # Pass proxy
-npx chatgpt "Hello" --proxy "http://user:pass@proxy.com:8080"
+npx @etrnkz/chatgpt "Hello" --proxy "http://user:pass@proxy.com:8080"
 ```
 
 ---
@@ -157,7 +157,7 @@ npx chatgpt "Hello" --proxy "http://user:pass@proxy.com:8080"
 Types are included:
 
 ```typescript
-import { ChatGPTWeb, ChatGPTApp, StreamChunk } from "chatgpt-unofficial-api";
+import { ChatGPTWeb, ChatGPTApp, StreamChunk } from "@etrnkz/chatgpt";
 
 const client = new ChatGPTWeb();
 await client.init();
@@ -175,7 +175,7 @@ for await (const chunk of stream) {
 Legacy v1 imports continue to work:
 
 ```javascript
-import { ChatGPT } from "chatgpt-unofficial-api";
+import { ChatGPT } from "@etrnkz/chatgpt";
 // or
 import { ChatGPT } from "./client/index.mjs";
 ```

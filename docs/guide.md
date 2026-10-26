@@ -3,7 +3,7 @@
 ## Setup
 
 ```sh
-npm install chatgpt-unofficial-api
+npm install @etrnkz/chatgpt
 ```
 
 Or clone the repo:
@@ -20,7 +20,7 @@ cd chatgpt-unofficial-api
 Works out of the box with zero login required:
 
 ```javascript
-import { ChatGPTWeb } from "chatgpt-unofficial-api/web";
+import { ChatGPTWeb } from "@etrnkz/chatgpt/web";
 
 const client = new ChatGPTWeb();
 await client.init();
@@ -73,7 +73,7 @@ const conversations = await client.getConversations();
 Connects directly to `https://android.chat.openai.com`:
 
 ```javascript
-import { ChatGPTApp } from "chatgpt-unofficial-api/app";
+import { ChatGPTApp } from "@etrnkz/chatgpt/app";
 
 const app = new ChatGPTApp({
   accessToken: process.env.CHATGPT_TOKEN
@@ -95,14 +95,14 @@ console.log(reply);
 
 ```sh
 # Ask via web backend
-npx chatgpt "What is 2+2?"
+npx @etrnkz/chatgpt "What is 2+2?"
 
 # Stream response
-npx chatgpt web "Tell me a story" --stream
+npx @etrnkz/chatgpt web "Tell me a story" --stream
 
 # View models
-npx chatgpt models
+npx @etrnkz/chatgpt models
 
 # View voices
-npx chatgpt voices
+npx @etrnkz/chatgpt voices
 ```
