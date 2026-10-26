@@ -1,6 +1,6 @@
 {
   "name": "@etrnkz/chatgpt",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Unofficial ChatGPT API client for Node.js — dual Web & Mobile App backends with zero dependencies",
   "type": "module",
   "main": "./src/index.mjs",

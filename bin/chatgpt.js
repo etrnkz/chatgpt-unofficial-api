@@ -4,7 +4,7 @@ import { createChatGPT, ChatGPTWeb, ChatGPTApp } from "../src/index.mjs";
 import fs from "fs";
 import path from "path";
 
-const VERSION = "2.0.0";
+const VERSION = "2.0.1";
 
 const BANNER = `
 ███  █   █  ███  █████  ███  ████  █████     ███  ████  ███ 
