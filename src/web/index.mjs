@@ -5,12 +5,45 @@ import { fileURLToPath } from "url";
 import {
   CFBypass,
   solvePow,
+  solveMwebPow,
   TurnstileVM,
   UploadManager,
   buildMultimodalMessage,
   parseSSEBuffer,
   streamSSEResponse,
+  parseMwebNdjson,
+  unescapeMarkdown,
+  streamMwebNdjsonLines,
 } from "../core/index.mjs";
+
+function formEncode(obj) {
+  const keys = Object.keys(obj);
+  const parts = [];
+  for (const k of keys) {
+    const v = obj[k] == null ? "" : String(obj[k]);
+    parts.push(encodeURIComponent(k) + "=" + encodeURIComponent(v));
+  }
+  return parts.join("&");
+}
+
+const AMP = String.fromCharCode(38);
+const ENTITY_MAP = {
+  [AMP + "quot;"]: String.fromCharCode(34),
+  [AMP + "#39;"]: String.fromCharCode(39),
+  [AMP + "apos;"]: String.fromCharCode(39),
+  [AMP + "lt;"]: String.fromCharCode(60),
+  [AMP + "gt;"]: String.fromCharCode(62),
+  [AMP + "amp;"]: String.fromCharCode(38),
+};
+
+function decodeEntities(s) {
+  return String(s).replace(/&[a-z#0-9]+;/gi, (m) => (ENTITY_MAP[m] || m));
+}
+
+function pickAttr(html, attr) {
+  const m = html.match(new RegExp(attr + '="([^"]*)"'));
+  return m ? decodeEntities(m[1]) : null;
+}
 
 const BASE = "https://chatgpt.com";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
@@ -41,6 +74,13 @@ export class ChatGPTWeb {
     this.sessionToken = opts.sessionToken || null;
     this.csrfToken = null;
     this.timezoneOffset = -new Date().getTimezoneOffset();
+    this.workerVersion = null;
+    this.affinity = null;
+    this.sessionId = null;
+    this.retryOwner = { mode: "anonymous", sessionEpoch: null };
+    this.scriptUrl = "https://chatgpt.com/unauth-mweb/assets/octane-home-client-Roev4IFd.js";
+    this.timeSinceLoaded = 16;
+    this.userMessageCount = 0;
 
     this.cookieStr = this._resolveCookies(opts);
     this._cf = new CFBypass({
@@ -83,7 +123,51 @@ export class ChatGPTWeb {
     return !!this.accessToken;
   }
 
+  async bootstrapMweb() {
+    const res = await this._cf.fetch(BASE + "/", {
+      headers: { accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" },
+      redirect: "follow",
+    });
+    if (res.error || !res.data) {
+      throw new Error("Mweb bootstrap failed with status " + res.status);
+    }
+    const html = res.data;
+    this.buildId = pickAttr(html, "data-build");
+    this.workerVersion = pickAttr(html, "data-worker-version-id");
+    this.affinity = pickAttr(html, "data-conversation-document-affinity");
+    const owner = pickAttr(html, "data-conversation-retry-owner");
+    if (owner) {
+      try { this.retryOwner = JSON.parse(owner); } catch {}
+    }
+
+    if (this.affinity) {
+      try {
+        const payload = JSON.parse(Buffer.from(this.affinity.split(".")[0].replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8"));
+        if (payload.s) this.sessionId = payload.s;
+      } catch {}
+    }
+    if (!this.sessionId) this.sessionId = crypto.randomUUID();
+
+    if (!this.deviceId) {
+      const jar = this._cf.getCookies() || "";
+      const m = jar.match(/oai-did=([^;]+)/);
+      this.deviceId = m ? m[1] : crypto.randomUUID();
+    }
+    this._cf.setCookies((this._cf.getCookies() ? this._cf.getCookies() + "; " : "") + `oai-did=${this.deviceId}`);
+
+    if (!this.buildId || !this.workerVersion || !this.affinity) {
+      throw new Error("Mweb bootstrap could not extract required build/worker/affinity metadata");
+    }
+    return { buildId: this.buildId, workerVersion: this.workerVersion, sessionId: this.sessionId };
+  }
+
   async init() {
+    if (!this.isAuthenticated) {
+      await this.bootstrapMweb();
+      if (this.cookieStr) await this._initAuth();
+      return this;
+    }
+
     const res = await this._fetch("/", { headers: { accept: "text/html" } });
     const html = await res.text();
     this.buildId = (html.match(/data-build="([^"]+)"/) || [])[1];
@@ -128,6 +212,7 @@ export class ChatGPTWeb {
     ];
 
     if (this.cookieStr) await this._initAuth();
+    return this;
   }
 
   async _initAuth() {
@@ -253,8 +338,271 @@ export class ChatGPTWeb {
     throw new Error("Conduit handshake failed: " + JSON.stringify(data));
   }
 
+  _baseMwebHeaders() {
+    return {
+      "x-web-mobile-document-worker-version": this.workerVersion,
+      "x-web-mobile-document-renderer": "octane",
+      "x-web-mobile-conversation-renderer": "octane",
+      "x-web-mobile-conversation-document-affinity": this.affinity,
+      "oai-session-id": this.sessionId,
+      "cloudflare-workers-version-overrides": 'web-mobile-prod="' + this.workerVersion + '"',
+      referer: BASE + "/",
+    };
+  }
+
+  _conversationReferer() {
+    return this.conversationId ? BASE + "/uc/" + this.conversationId : BASE + "/";
+  }
+
+  _buildMwebSentinelConfig() {
+    return [
+      2340,
+      new Date().toDateString(),
+      3760000000,
+      1,
+      this._cf.userAgent || UA,
+      this.scriptUrl,
+      this.buildId,
+      "en-US",
+      "en-US",
+      2 + Math.random(),
+      "mediaCapabilities−[object MediaCapabilities]",
+      "location",
+      "window",
+      0,
+      this.deviceId,
+      "",
+      12,
+      Date.now() + Math.random(),
+      0, 0, 0, 0, 0, 0, 0,
+    ];
+  }
+
+  _conversationState() {
+    const state = {
+      messages: [],
+      parentMessageId: this.parentMessageId || "client-created-root",
+      userMessageCount: this.userMessageCount || 0,
+    };
+    if (this.conversationId) state.backendConversationId = this.conversationId;
+    return state;
+  }
+
+  async _sentinelPrepare(config) {
+    const p = "gAAAAAC" + Buffer.from(JSON.stringify(config)).toString("base64");
+    const res = await this._cf.fetch(BASE + "/unauth-mweb/sentinel/chat-requirements/prepare", {
+      method: "POST",
+      headers: { ...this._baseMwebHeaders(), "content-type": "application/json", accept: "application/json" },
+      body: JSON.stringify({ p }),
+    });
+    if (res.error || !res.data) {
+      throw new Error("Sentinel prepare failed with status " + res.status + ": " + (res.data || "").slice(0, 200));
+    }
+    return JSON.parse(res.data);
+  }
+
+  async _sentinelFinalize(prepareToken, proofToken) {
+    const res = await this._cf.fetch(BASE + "/unauth-mweb/sentinel/chat-requirements/finalize", {
+      method: "POST",
+      headers: { ...this._baseMwebHeaders(), "content-type": "application/json", accept: "application/json" },
+      body: JSON.stringify({ prepare_token: prepareToken, proofofwork: proofToken, turnstile: "" }),
+    });
+    if (res.error || !res.data) {
+      throw new Error("Sentinel finalize failed with status " + res.status + ": " + (res.data || "").slice(0, 200));
+    }
+    return JSON.parse(res.data);
+  }
+
+  async _conversationPrepare() {
+    const body = formEncode({
+      conversationRetryOwner: JSON.stringify(this.retryOwner),
+      conversationState: JSON.stringify(this._conversationState()),
+      clientContextualInfo: JSON.stringify({
+        app_name: "chatgpt.com",
+        has_web_push_capabilities: true,
+        is_dark_mode: false,
+        web_push_notification_permission: "denied",
+        page_height: 900,
+        page_width: 1440,
+        pixel_ratio: 1,
+        screen_height: 900,
+        screen_width: 1440,
+        time_since_loaded: this.timeSinceLoaded,
+      }),
+      timezone: "UTC",
+      timezoneOffsetMinutes: this.timezoneOffset || 0,
+    });
+
+    const res = await this._cf.fetch(BASE + "/unauth-mweb/conversation/prepare?lightweight_authenticated=0", {
+      method: "POST",
+      headers: {
+        ...this._baseMwebHeaders(),
+        "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
+        "x-web-mobile-conversation-source": "2",
+        "x-web-mobile-prepare-state": "none",
+        "x-web-mobile-prepare-reason": "context_change",
+        "x-openai-beacon-google-auth": "1",
+        "x-oai-turn-trace-id": crypto.randomUUID(),
+        referer: this._conversationReferer(),
+      },
+      body,
+    });
+    if (res.error || !res.data) {
+      const upgrade = res.headers?.get ? res.headers.get("x-web-mobile-conversation-document-upgrade") : null;
+      throw new Error(
+        "Conversation prepare failed with status " + res.status +
+        (upgrade ? " (document upgrade required)" : "") + ": " + (res.data || "").slice(0, 200)
+      );
+    }
+    return JSON.parse(res.data);
+  }
+
+  async _conversationUpdates(prompt, tokens) {
+    const fields = {
+      conversationState: JSON.stringify(Object.assign(
+        { safety: { dismissedInterventionIds: [] } },
+        this._conversationState()
+      )),
+      messageMetadata: this.conversationId ? "{}" : "",
+      "oai-session-id": this.sessionId,
+      imageAttachments: "[]",
+      pendingImageUploads: "[]",
+      prompt,
+      clientContextualInfo: JSON.stringify({
+        app_name: "chatgpt.com",
+        has_web_push_capabilities: true,
+        is_dark_mode: false,
+        web_push_notification_permission: "denied",
+        page_height: 900,
+        page_width: 1440,
+        pixel_ratio: 1,
+        screen_height: 900,
+        screen_width: 1440,
+        time_since_loaded: this.timeSinceLoaded + 5,
+      }),
+      imageSaveData: "off",
+      imageEffectiveType: "4g",
+      timezone: "UTC",
+      timezoneOffsetMinutes: this.timezoneOffset || 0,
+      conversationRetryOwner: JSON.stringify(this.retryOwner),
+      workOrigin: "",
+      workModel: "",
+      workEffort: "",
+      workTier: "",
+      assistantMessageId: "pending-" + crypto.randomUUID(),
+      userMessageId: crypto.randomUUID(),
+      chatRequirementsToken: tokens.chatRequirementsToken,
+      proofToken: tokens.proofToken,
+      turnstileToken: "",
+      telemetryToken: "0,18775",
+      timingToken: "[1,null]",
+    };
+
+    const operationId = crypto.randomUUID();
+    return await this._cf.fetch(
+      BASE + "/unauth-mweb/conversation/updates?lightweight_authenticated=0&operationId=" + operationId,
+      {
+        method: "POST",
+        headers: {
+          ...this._baseMwebHeaders(),
+          "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
+          accept: "application/vnd.openai.conversation-source+ndjson",
+          "x-web-mobile-conversation-stream-protocol": "2",
+          "x-web-mobile-conversation-source": "2",
+          "x-web-mobile-prepare-state": "success",
+          "x-conduit-token": tokens.conduitToken,
+          "x-openai-beacon-google-auth": "1",
+          "x-oai-turn-trace-id": crypto.randomUUID(),
+          referer: this._conversationReferer(),
+        },
+        body: formEncode(fields),
+      }
+    );
+  }
+
+  async _askGuest(message, options = {}) {
+    await this.bootstrapMweb();
+
+    const config = this._buildMwebSentinelConfig();
+    const prepare = await this._sentinelPrepare(config);
+
+    const proofToken = solveMwebPow(prepare.proofofwork?.seed, prepare.proofofwork?.difficulty, config);
+    if (!proofToken) throw new Error("Proof-of-work was not solved within attempt budget");
+
+    const conduit = await this._conversationPrepare();
+    const finalized = await this._sentinelFinalize(prepare.prepare_token, proofToken);
+
+    const fullPrompt = options.systemPrompt
+      ? options.systemPrompt + "\n\n---\n\n" + message
+      : message;
+
+    const res = await this._conversationUpdates(fullPrompt, {
+      chatRequirementsToken: finalized.token,
+      proofToken,
+      conduitToken: conduit.conduit_token,
+    });
+
+    const body = res.data;
+    if (res.error && !body) {
+      const err = new Error("Upstream returned status " + res.status);
+      if (res.status === 404 || res.status === 400 || res.status >= 500) err.isSessionExpired = true;
+      throw err;
+    }
+
+    const parsed = parseMwebNdjson(body);
+    if (parsed.failure) {
+      const err = new Error("Upstream turn failed: " + parsed.failure);
+      const failLower = String(parsed.failure).toLowerCase();
+      if (
+        failLower.includes("conversation") ||
+        failLower.includes("parent") ||
+        failLower.includes("not_found") ||
+        failLower.includes("expired") ||
+        failLower.includes("session") ||
+        failLower.includes("server_upstream_response_status") ||
+        failLower.includes("status") ||
+        failLower.includes("upstream")
+      ) {
+        err.isSessionExpired = true;
+      }
+      throw err;
+    }
+    if (!parsed.content) {
+      const err = new Error("Upstream returned empty response (status " + res.status + ")");
+      if (res.status === 404 || res.status === 400) err.isSessionExpired = true;
+      throw err;
+    }
+
+    if (parsed.backendConversationId) this.conversationId = parsed.backendConversationId;
+    if (parsed.parentMessageId) this.parentMessageId = parsed.parentMessageId;
+    if (parsed.userMessageCount) this.userMessageCount = parsed.userMessageCount;
+
+    return parsed.content;
+  }
+
+  _isContinuationError(err) {
+    if (!err) return false;
+    if (err.isSessionExpired) return true;
+    const msg = String(err.message || "").toLowerCase();
+    return (
+      msg.includes("server_upstream_response_status") ||
+      msg.includes("session") ||
+      msg.includes("conversation") ||
+      msg.includes("parent") ||
+      msg.includes("not_found") ||
+      msg.includes("expired") ||
+      msg.includes("status 404") ||
+      msg.includes("status 400") ||
+      msg.includes("status 500") ||
+      msg.includes("status 502") ||
+      msg.includes("status 503")
+    );
+  }
+
   /**
    * Ask ChatGPT a prompt and receive the complete answer text.
+   * Auto-heals stale turn continuations by retrying once as a fresh turn if needed.
+   *
    * @param {string} message - Prompt to send
    * @param {Object} [options={}] - Query options
    * @param {string} [options.model="auto"] - Model slug (e.g. "auto", "gpt-4o", "o1", "o3-mini")
@@ -262,9 +610,31 @@ export class ChatGPTWeb {
    * @param {string} [options.image] - Base64 image payload
    * @param {boolean} [options.forceSearch=false] - Force live web search tool
    * @param {Array<string>} [options.systemHints=[]] - System guidance hints
+   * @param {string} [options.systemPrompt] - System prompt instructions
    * @returns {Promise<string>} The assistant's text response
    */
   async ask(message, options = {}) {
+    const isContinuation = !!this.conversationId;
+    try {
+      if (!this.isAuthenticated) {
+        return await this._askGuest(message, options);
+      }
+      return await this._askAuth(message, options);
+    } catch (err) {
+      if (isContinuation && this._isContinuationError(err)) {
+        this.conversationId = null;
+        this.parentMessageId = null;
+        this.userMessageCount = 0;
+        if (!this.isAuthenticated) {
+          return await this._askGuest(message, options);
+        }
+        return await this._askAuth(message, options);
+      }
+      throw err;
+    }
+  }
+
+  async _askAuth(message, options = {}) {
     if (!this.buildId || !this.deviceId) await this.init();
     await this.getTokens();
     this.config[3] = Math.random();
@@ -385,6 +755,89 @@ export class ChatGPTWeb {
    * @yields {{ text: string, accumulated: string, done: boolean, conversationId: string|null, messageId: string|null }}
    */
   async *streamAsk(message, options = {}) {
+    if (!this.isAuthenticated) {
+      await this.bootstrapMweb();
+      const config = this._buildMwebSentinelConfig();
+      const prepare = await this._sentinelPrepare(config);
+      const proofToken = solveMwebPow(prepare.proofofwork?.seed, prepare.proofofwork?.difficulty, config);
+      if (!proofToken) throw new Error("Proof-of-work was not solved within attempt budget");
+
+      const conduit = await this._conversationPrepare();
+      const finalized = await this._sentinelFinalize(prepare.prepare_token, proofToken);
+
+      const fullPrompt = options.systemPrompt
+        ? options.systemPrompt + "\n\n---\n\n" + message
+        : message;
+
+      const fields = {
+        conversationState: JSON.stringify(Object.assign(
+          { safety: { dismissedInterventionIds: [] } },
+          this._conversationState()
+        )),
+        messageMetadata: this.conversationId ? "{}" : "",
+        "oai-session-id": this.sessionId,
+        imageAttachments: "[]",
+        pendingImageUploads: "[]",
+        prompt: fullPrompt,
+        clientContextualInfo: JSON.stringify({
+          app_name: "chatgpt.com",
+          has_web_push_capabilities: true,
+          is_dark_mode: false,
+          web_push_notification_permission: "denied",
+          page_height: 900,
+          page_width: 1440,
+          pixel_ratio: 1,
+          screen_height: 900,
+          screen_width: 1440,
+          time_since_loaded: this.timeSinceLoaded + 5,
+        }),
+        imageSaveData: "off",
+        imageEffectiveType: "4g",
+        timezone: "UTC",
+        timezoneOffsetMinutes: this.timezoneOffset || 0,
+        conversationRetryOwner: JSON.stringify(this.retryOwner),
+        workOrigin: "",
+        workModel: "",
+        workEffort: "",
+        workTier: "",
+        assistantMessageId: "pending-" + crypto.randomUUID(),
+        userMessageId: crypto.randomUUID(),
+        chatRequirementsToken: finalized.token,
+        proofToken,
+        turnstileToken: "",
+        telemetryToken: "0,18775",
+        timingToken: "[1,null]",
+      };
+
+      const operationId = crypto.randomUUID();
+      const res = await this._cf.fetchStream(
+        BASE + "/unauth-mweb/conversation/updates?lightweight_authenticated=0&operationId=" + operationId,
+        {
+          method: "POST",
+          headers: {
+            ...this._baseMwebHeaders(),
+            "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
+            accept: "application/vnd.openai.conversation-source+ndjson",
+            "x-web-mobile-conversation-stream-protocol": "2",
+            "x-web-mobile-conversation-source": "2",
+            "x-web-mobile-prepare-state": "success",
+            "x-conduit-token": conduit.conduit_token,
+            "x-openai-beacon-google-auth": "1",
+            "x-oai-turn-trace-id": crypto.randomUUID(),
+            referer: this._conversationReferer(),
+          },
+          body: formEncode(fields),
+        }
+      );
+      if (!res.ok) throw new Error(`Conversation stream failed: HTTP ${res.status}`);
+      for await (const chunk of streamMwebNdjsonLines(res)) {
+        if (chunk.conversationId) this.conversationId = chunk.conversationId;
+        if (chunk.messageId) this.parentMessageId = chunk.messageId;
+        yield chunk;
+      }
+      return;
+    }
+
     if (!this.buildId || !this.deviceId) await this.init();
     await this.getTokens();
     this.config[3] = Math.random();

@@ -78,3 +78,18 @@ export function solvePow(seed, difficulty, config, maxAttempts = 500000) {
   }
   return null;
 }
+
+export function solveMwebPow(seed, difficulty, config, maxAttempts = 4000000) {
+  if (!difficulty || difficulty.length === 0) return null;
+  const t0 = Date.now();
+  const prefixLen = difficulty.length;
+  for (let i = 0; i < maxAttempts; i++) {
+    config[3] = i;
+    config[13] = Math.round(Date.now() - t0);
+    const encoded = Buffer.from(JSON.stringify(config)).toString("base64");
+    if (fnv1a(seed + encoded).slice(0, prefixLen) <= difficulty) {
+      return "gAAAAAB" + encoded + "~S";
+    }
+  }
+  return null;
+}
